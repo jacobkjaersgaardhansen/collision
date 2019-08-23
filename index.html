@@ -1,0 +1,195 @@
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="./bootstrap.cosmo.min.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=UA-25862436-3"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'UA-25862436-3');
+        </script>
+    </head>
+    <body>
+        <div class="jumbotron">
+            <h1>Elastic collisions of free sliding blocks of various masses</h1>
+            <button type="button" class="btn btn-secondary" onclick="sampleRun1()">Sample 1</button>
+            <button type="button" class="btn btn-secondary" onclick="sampleRun2()">Sample 2</button>
+            <button type="button" class="btn btn-secondary" onclick="sampleRun3()">Sample 3</button>
+            <button type="button" class="btn btn-secondary" onclick="sampleRun4()">Sample 4</button>
+            <button  type="button" class="btn btn-success"id="btnRun">Run!</button>
+
+            <svg id = "svg1" width = "100%" height = "150px"></svg>
+            <svg id = "svg2" width = "50%" height = "200px"></svg>
+        </div>
+        <script>
+            const svg1 = document.getElementById('svg1');
+            const svg2 = document.getElementById('svg2');
+            const btnRun = document.getElementById('btnRun');
+            const w = innerWidth;
+            const T = 600000 //ms, Total run time
+            const stepsize = 10 //ms, duration of each frame
+            const b = 50; // width of rectangles
+            const collisionThreshold = b;
+            let id = null;
+            
+            btnRun.addEventListener('click', () => {
+                if(id){
+                    clearInterval(id);
+                    id = null;
+                    btnRun.innerHTML = 'Run!';
+                    btnRun.setAttribute('class','btn btn-success');
+                } else {
+                    id = run();
+                    btnRun.innerHTML = 'Stop';
+                    btnRun.setAttribute('class','btn btn-danger');
+                }
+            });
+
+            let blocks = [];
+            sampleRun1();
+
+            function customRun(){
+                blocks = customBlocks;
+                initialize();
+            }
+
+            function sampleRun1(){
+                blocks = [];
+                blocks.push(new Block("block0", 10000000, 0, 0, "black"));
+                blocks.push(new Block("block1", 1, 100, 0, "green"));
+                blocks.push(new Block("block2", 10, 200, 0, "navy"));
+                blocks.push(new Block("block3", 100, 300, 0, "firebrick"));
+                blocks.push(new Block("block4", 100, 450, -0.05, "orange"));
+                initialize();
+            }
+
+            function sampleRun2(){
+                blocks = [];
+                blocks.push(new Block("block0", 10000000, 0, 0, "black"));
+                blocks.push(new Block("block1", 100, 100, 0, "green"));
+                blocks.push(new Block("block2", 10, 200, 0, "navy"));
+                blocks.push(new Block("block3", 1, 300, 0, "firebrick"));
+                blocks.push(new Block("block4", 100, 450, -0.05, "orange"));
+                initialize();
+            }
+
+            function sampleRun3(){
+                blocks = [];
+                blocks.push(new Block("block0", 10000000, 0, 0, "black"));
+                blocks.push(new Block("block1", 1, 200, -0.1, "green"));
+                initialize();
+            }
+
+            function sampleRun4(){
+                blocks = [];
+                blocks.push(new Block("block0", 10000000, 0, 0, "black"));
+                blocks.push(new Block("block1", 1, 100, 0, "grey"));
+                blocks.push(new Block("block2", 1, 150, 0, "grey"));
+                blocks.push(new Block("block4", 1, 200, -0.1, "grey"));
+                blocks.push(new Block("block5", 1, 300, -0.1, "grey"));
+                blocks.push(new Block("block3", 10000000, 350, 0, "black"));
+                initialize();
+            }
+
+            function Block(id, mass, position, velocity = 0, color="lightgrey"){
+                this.id = id;
+                this.mass = mass;
+                this.position = position;
+                this.velocity = velocity;
+                this.color = color;
+            }
+
+            function initialize(){
+                initializeBlocks();
+                initializeLegend();
+            }
+
+            function initializeBlocks(){
+                while (svg1.lastChild) {
+                    svg1.removeChild(svg1.lastChild);
+                }
+                blocks.forEach(block => {
+                    let node = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    node.setAttribute('id', block.id);
+                    node.setAttribute('x', block.position);
+                    node.setAttribute('y', 50);
+                    node.setAttribute('width', 50);
+                    node.setAttribute('height', 50);
+                    node.setAttribute('fill', block.color);
+                    node.setAttribute('stroke', "black");
+                    node.setAttribute('stroke-width', 1);
+                    document.getElementById('svg1').appendChild(node);
+                });
+            }
+
+            function initializeLegend(){
+                while (svg2.lastChild) {
+                    svg2.removeChild(svg2.lastChild);
+                }
+                blocks.forEach((block, i) => {
+                    let node = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    node.setAttribute('x', 0);
+                    node.setAttribute('y', 30*i);
+                    node.setAttribute('width', 25);
+                    node.setAttribute('height', 25);
+                    node.setAttribute('fill', block.color);
+                    document.getElementById('svg2').appendChild(node);
+
+                    node = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    node.setAttribute('x', 30);
+                    node.setAttribute('y', 19 + 30*i);
+                    node.setAttribute('font-family', 'verdana');
+                    let textnode = document.createTextNode(block.mass);
+                    node.appendChild(textnode);
+                    document.getElementById('svg2').appendChild(node);
+                })
+            }
+
+            function run(step = 0){
+                const id = setInterval(animate2, stepsize);
+                function animate2(){
+                    if (step == Math.ceil(T/stepsize)){
+                            clearInterval(id);
+                        }
+                    else {
+                        step += 1;
+                        t = stepsize;
+                        blocks.forEach(block => {
+                            block.position += block.velocity * t;
+                            document.getElementById(block.id).setAttribute('x', block.position); 
+                        })
+                        checkCollision();
+                    }
+                }
+                return id;
+            }
+
+            function checkCollision(){
+                positionsSorted = blocks.map((d, i) => [d.position, i]).sort((a, b) => a[0] - b[0]);
+                for(let i = 0; i < positionsSorted.length-1; i++){
+                    if (positionsSorted[i+1][0] - positionsSorted[i][0] < collisionThreshold){
+                        // collision!
+                        handleCollision(positionsSorted[i][1], positionsSorted[i+1][1]);
+                    }
+                }
+            }
+
+            function handleCollision(id1, id2){
+                audio = new Audio('click.mp3');
+                audio.play();
+
+                // assumes elastic collisions
+                let m1 = blocks[id1].mass,
+                    m2 = blocks[id2].mass,
+                    v1 = blocks[id1].velocity,
+                    v2 = blocks[id2].velocity;
+                blocks[id1].velocity = (2*m2*v2 + (m1 - m2)*v1) / (m2 + m1);
+                blocks[id2].velocity = (2*m1*v1 + (m2 - m1)*v2) / (m2 + m1);
+            }
+
+        </script>
+    </body>
+</html>
